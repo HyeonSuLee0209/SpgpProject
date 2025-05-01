@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "MySpgpProject"
 include(":app")
-include(":a2dg")
+include("a2dg")

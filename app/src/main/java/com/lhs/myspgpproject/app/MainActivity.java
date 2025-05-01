@@ -4,13 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.MotionEvent;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-import com.lhs.myspgpproject.MyProjectActivity;
 import com.lhs.myspgpproject.R;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            startActivity(new Intent(this, MyProjectActivity.class));
+            startActivity(new Intent(this, AnipangActivity.class));
         }
         return super.onTouchEvent(event);
     }
