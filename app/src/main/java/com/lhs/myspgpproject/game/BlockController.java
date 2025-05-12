@@ -202,7 +202,7 @@ public class BlockController implements IGameObject {
                 selectedBlock.swapWith(targetBlock);
 
                 // 스와핑 시작 시
-                isSwapping = true;  // 플래그만 세워둠
+                isSwapping = true;
                 break;
         }
 

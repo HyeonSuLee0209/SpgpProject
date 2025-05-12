@@ -204,7 +204,6 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
         this.setTargetPosition(vertToX(vert), horzToY(horz));
     }
 
-    // Block 내부는 이렇게 간단하게 유지
     public void swapWith(Block other) {
         int tempVert = this.vert;
         int tempHorz = this.horz;
