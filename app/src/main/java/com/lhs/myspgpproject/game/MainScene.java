@@ -25,12 +25,12 @@ public class MainScene extends Scene {
         initLayers(Layer.COUNT);
 
         this.score = new Score(R.mipmap.number_24x32, 885f, 15f, 60f);
-        score.setScore(0);
+        score.setScore(1000);
         add(Layer.ui, score);
 
         this.limitTime = new LimitTime(R.mipmap.number_24x32, 185f, 150f, 60f);
-        limitTime.setLimitTime(20);
-//        add(Layer.ui, limitTime);
+        limitTime.setLimitTime(10);
+        add(Layer.ui, limitTime);
 
         add(Layer.controller, new BlockController(this));
     }

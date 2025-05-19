@@ -33,7 +33,7 @@ public class BlockController implements IGameObject {
                     type = random.nextInt(TYPE_NUMS);
                 } while (isSameAsPrevious(vert, horz, type));
 
-                Block block = new Block().get(type, vert, horz);
+                Block block = Block.get(type, vert, horz);
                 grid[horz][vert] = block;
                 scene.add(block);
             }
