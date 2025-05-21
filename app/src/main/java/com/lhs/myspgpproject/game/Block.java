@@ -20,7 +20,8 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     private static final float HORZ = 7;
     private static final int[] resIds = {
             R.mipmap.block_01, R.mipmap.block_02, R.mipmap.block_03,
-            R.mipmap.block_04, R.mipmap.block_05, R.mipmap.block_06
+            R.mipmap.block_04, R.mipmap.block_05, R.mipmap.block_06,
+            R.mipmap.block_07
     };
     protected RectF collisionRect = new RectF();
     private int type;
@@ -65,6 +66,8 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
                 break;
             case Swapping:
                 handleSwapping();
+                break;
+            case Matched:
                 break;
             default:
                 break;

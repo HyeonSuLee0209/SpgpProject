@@ -18,7 +18,7 @@ public class BlockController implements IGameObject {
     private static final int HORZ = 7;
     private static boolean isBoard = true;
     private Block[][] grid = new Block[HORZ][VERT];
-    private static final int TYPE_NUMS = 6;
+    private static final int TYPE_NUMS = 7;
     private static MainScene scene;
     public BlockController(MainScene mainScene) {
         this.scene = mainScene;

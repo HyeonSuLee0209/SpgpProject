@@ -13,6 +13,8 @@ public class MainScene extends Scene {
     private final Score score;
     private final LimitTime limitTime; // 60초 제한 시간
 
+    private final Reset reset;
+
     public enum Layer {
         bg, block, ui, controller;
         public static final int COUNT = values().length;
@@ -29,8 +31,10 @@ public class MainScene extends Scene {
         add(Layer.ui, score);
 
         this.limitTime = new LimitTime(R.mipmap.number_24x32, 185f, 150f, 60f);
-        limitTime.setLimitTime(10);
+        limitTime.setLimitTime(120);
         add(Layer.ui, limitTime);
+
+
 
         add(Layer.controller, new BlockController(this));
     }
