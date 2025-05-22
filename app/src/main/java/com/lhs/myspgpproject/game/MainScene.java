@@ -34,7 +34,8 @@ public class MainScene extends Scene {
         limitTime.setLimitTime(120);
         add(Layer.ui, limitTime);
 
-
+        this.reset = new Reset(R.mipmap.reset, 450f, 15f, 60f);
+        add(Layer.ui, reset);
 
         add(Layer.controller, new BlockController(this));
     }

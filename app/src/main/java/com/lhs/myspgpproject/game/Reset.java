@@ -7,7 +7,6 @@ import android.graphics.RectF;
 
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.interfaces.IGameObject;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.res.BitmapPool;
-import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.GameView;
 
 public class Reset implements IGameObject {
     private final Bitmap bitmap;
@@ -21,9 +20,10 @@ public class Reset implements IGameObject {
         this.right = right;
         this.top = top;
         this.dstCharWidth = width;
-        this.srcCharWidth = bitmap.getWidth() / 10;
+        this.srcCharWidth = bitmap.getWidth();
         this.srcCharHeight = bitmap.getHeight();
-        this.dstCharHeight = dstCharWidth * srcCharHeight / srcCharWidth;
+        float aspectRatio = (float) bitmap.getHeight() / bitmap.getWidth();
+        this.dstCharHeight = dstCharWidth * aspectRatio;
     }
 
     @Override
@@ -32,5 +32,8 @@ public class Reset implements IGameObject {
 
     @Override
     public void draw(Canvas canvas) {
+        srcRect.set(srcCharWidth, 0, srcCharWidth, srcCharHeight);
+        dstRect.set(right, top, right + dstCharWidth, top + dstCharHeight);
+        canvas.drawBitmap(bitmap, srcRect, dstRect, null);
     }
 }
