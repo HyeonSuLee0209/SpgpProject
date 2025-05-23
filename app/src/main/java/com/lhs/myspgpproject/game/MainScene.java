@@ -27,14 +27,14 @@ public class MainScene extends Scene {
         initLayers(Layer.COUNT);
 
         this.score = new Score(R.mipmap.number_24x32, 885f, 15f, 60f);
-        score.setScore(1000);
+        score.setScore(0);
         add(Layer.ui, score);
 
         this.limitTime = new LimitTime(R.mipmap.number_24x32, 185f, 150f, 60f);
         limitTime.setLimitTime(120);
         add(Layer.ui, limitTime);
 
-        this.reset = new Reset(R.mipmap.reset, 450f, 15f, 60f);
+        this.reset = new Reset(R.mipmap.reset, 700f, 15f, 200f);
         add(Layer.ui, reset);
 
         add(Layer.controller, new BlockController(this));

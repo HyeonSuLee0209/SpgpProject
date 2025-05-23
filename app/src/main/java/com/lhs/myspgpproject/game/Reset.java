@@ -22,8 +22,7 @@ public class Reset implements IGameObject {
         this.dstCharWidth = width;
         this.srcCharWidth = bitmap.getWidth();
         this.srcCharHeight = bitmap.getHeight();
-        float aspectRatio = (float) bitmap.getHeight() / bitmap.getWidth();
-        this.dstCharHeight = dstCharWidth * aspectRatio;
+        this.dstCharHeight = dstCharWidth * srcCharHeight / srcCharWidth;
     }
 
     @Override
@@ -32,7 +31,7 @@ public class Reset implements IGameObject {
 
     @Override
     public void draw(Canvas canvas) {
-        srcRect.set(srcCharWidth, 0, srcCharWidth, srcCharHeight);
+        srcRect.set(0, 0, srcCharWidth, srcCharHeight);
         dstRect.set(right, top, right + dstCharWidth, top + dstCharHeight);
         canvas.drawBitmap(bitmap, srcRect, dstRect, null);
     }
