@@ -32,7 +32,6 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     public enum State {
         Idle,
         Swapping,
-        Matched,
     }
     private State state = State.Idle;
     public State getState() { return state; }
@@ -66,8 +65,6 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
                 break;
             case Swapping:
                 handleSwapping();
-                break;
-            case Matched:
                 break;
             default:
                 break;
@@ -220,9 +217,5 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
         this.setState(State.Swapping);
         other.setState(State.Swapping);
     }
-    // ------------------------------------------------------------------
-    
-    // 블록 매칭 시 처리----------------------------------------------------
-
     // ------------------------------------------------------------------
 }

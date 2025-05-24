@@ -28,16 +28,22 @@ public class BlockController implements IGameObject {
     public void generateBoard() {
         for (int horz = 0; horz < HORZ; horz++) {
             for (int vert = 0; vert < VERT; vert++) {
-                int type;
-                do {
-                    type = random.nextInt(TYPE_NUMS);
-                } while (isSameAsPrevious(vert, horz, type));
+                int type = checkStartBoard(vert, horz);
 
                 Block block = Block.get(type, vert, horz);
                 grid[horz][vert] = block;
                 scene.add(block);
             }
         }
+    }
+
+    public int checkStartBoard(int vert, int horz) {
+        int type;
+        do {
+            type = random.nextInt(TYPE_NUMS);
+        } while (isSameAsPrevious(vert, horz, type));
+
+        return type;
     }
 
     private boolean isSameAsPrevious(int vert, int horz, int type) {
@@ -84,6 +90,10 @@ public class BlockController implements IGameObject {
                         grid[targetHorz][targetVert] = selectedBlock;
 
                         selectedBlock.swapWith(targetBlock);
+                    } else {
+                        if(!isSwappingInProgress()) {
+                            deleteBlock(matchedGroups);
+                        }
                     }
                     isSwapping = false;
                     selectedBlock = null;
@@ -236,8 +246,10 @@ public class BlockController implements IGameObject {
     }
 
     // 매칭 판별 처리 -----------------------------------------------------------
+    private final List<List<Block>> matchedGroups = new ArrayList<>();
+
     private List<List<Block>> findMatches() {
-        List<List<Block>> matchedGroups = new ArrayList<>();
+        matchedGroups.clear();
         boolean[][] visited = new boolean[HORZ][VERT];
 
         // 가로 매칭 탐색
@@ -261,7 +273,7 @@ public class BlockController implements IGameObject {
                     addMatchToGroup(matchedGroups, visited, y, x, matchLen, true);
                 }
 
-                x += (matchLen > 1) ? matchLen : 1;
+                x += Math.max(matchLen, 1);
             }
         }
     }
@@ -293,7 +305,7 @@ public class BlockController implements IGameObject {
                     addMatchToGroup(matchedGroups, visited, y, x, matchLen, false);
                 }
 
-                y += (matchLen > 1) ? matchLen : 1;
+                y += Math.max(matchLen, 1);
             }
         }
     }
@@ -332,6 +344,14 @@ public class BlockController implements IGameObject {
 //            return true;
 //        }
         return false;
+    }
+
+    private void deleteBlock(List<List<Block>> matchedGroups) {
+        for (List<Block> matchGroup : matchedGroups) {
+            for(Block b : matchGroup) {
+                scene.remove(b);
+            }
+        }
     }
     //-------------------------------------------------------------------------
 }

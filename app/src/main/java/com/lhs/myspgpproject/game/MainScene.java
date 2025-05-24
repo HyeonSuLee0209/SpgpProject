@@ -16,7 +16,7 @@ public class MainScene extends Scene {
     private final Reset reset;
 
     public enum Layer {
-        bg, block, ui, controller;
+        block, ui, controller;
         public static final int COUNT = values().length;
     }
     public MainScene() {
@@ -26,15 +26,15 @@ public class MainScene extends Scene {
         Metrics.setGameSize(900, 1600);
         initLayers(Layer.COUNT);
 
-        this.score = new Score(R.mipmap.number_24x32, 885f, 15f, 60f);
-        score.setScore(0);
+        this.score = new Score(R.mipmap.number_24x32, 885f, 135f, 60f);
+        score.setScore(10);
         add(Layer.ui, score);
 
         this.limitTime = new LimitTime(R.mipmap.number_24x32, 185f, 150f, 60f);
         limitTime.setLimitTime(120);
         add(Layer.ui, limitTime);
 
-        this.reset = new Reset(R.mipmap.reset, 700f, 15f, 200f);
+        this.reset = new Reset(R.mipmap.reset, 670f, 15f);
         add(Layer.ui, reset);
 
         add(Layer.controller, new BlockController(this));

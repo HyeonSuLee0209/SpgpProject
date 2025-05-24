@@ -11,11 +11,12 @@ import kr.ac.tukorea.ge.spgp2025.a2dg.framework.res.BitmapPool;
 public class Reset implements IGameObject {
     private final Bitmap bitmap;
     private final float right, top, dstCharWidth, dstCharHeight;
+    private static final float width = 100f;
     private final Rect srcRect = new Rect();
     private final RectF dstRect = new RectF();
     private final int srcCharWidth, srcCharHeight;
 
-    public Reset(int mipmapId, float right, float top, float width) {
+    public Reset(int mipmapId, float right, float top) {
         this.bitmap = BitmapPool.get(mipmapId);
         this.right = right;
         this.top = top;
