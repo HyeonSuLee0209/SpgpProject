@@ -91,9 +91,7 @@ public class BlockController implements IGameObject {
 
                         selectedBlock.swapWith(targetBlock);
                     } else {
-                        if(!isSwappingInProgress()) {
-                            deleteBlock(matchedGroups);
-                        }
+                        deleteBlock(matchedGroups);
                     }
                     isSwapping = false;
                     selectedBlock = null;
@@ -354,4 +352,30 @@ public class BlockController implements IGameObject {
         }
     }
     //-------------------------------------------------------------------------
+
+    // 블록 하강 처리 -----------------------------------------------------------
+    public void fallBlocks() {
+        for (int x = 0; x < VERT; x++) {
+            for (int y = 0; y < HORZ - 1; y++) {
+                if (grid[x][y] == null) {
+                    // 위에서 블럭 찾아서 내려보냄
+                    for (int yy = y + 1; yy < HORZ; yy++) {
+                        if (grid[x][yy] != null) {
+                            Block fallingBlock = grid[x][yy];
+                            grid[x][y] = fallingBlock;
+                            grid[x][yy] = null;
+
+                            fallingBlock.setGridPosition(x, y);
+                            fallingBlock.setTargetPositionToGrid(); // 부드럽게 내려오도록
+                            fallingBlock.setState(Block.State.Swapping); // 상태도 Swapping으로
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    
 }
