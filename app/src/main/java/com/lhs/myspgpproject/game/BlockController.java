@@ -63,42 +63,51 @@ public class BlockController implements IGameObject {
         if(isBoard) {
             generateBoard();
             isBoard = false;
+            return;
         }
 
-        if (isSwapping) {
-            if(selectedBlock != null && targetBlock != null) {
-                if (selectedBlock.getState() == Block.State.Idle &&
-                        targetBlock.getState() == Block.State.Idle) {
-                    if (findMatches().isEmpty()) {
-                        int selectedVert  = selectedBlock.getVert();
-                        int selectedHorz  = selectedBlock.getHorz();
-
-                        int targetVert = selectedVert;
-                        int targetHorz = selectedHorz;
-
-                        switch (direction) {
-                            case LEFT:  targetVert += 1; break;
-                            case RIGHT: targetVert -= 1; break;
-                            case UP:    targetHorz -= 1; break;
-                            case DOWN:  targetHorz += 1; break;
-                            default: break;
-                        }
-
-                        targetBlock = grid[targetHorz][targetVert];
-
-                        grid[selectedHorz][selectedVert] = targetBlock;
-                        grid[targetHorz][targetVert] = selectedBlock;
-
-                        selectedBlock.swapWith(targetBlock);
-                    } else {
-                        deleteBlock(matchedGroups);
-                    }
-                    isSwapping = false;
-                    selectedBlock = null;
-                    targetBlock = null;
-                }
-            }
+        if(!isSwapping || selectedBlock == null || targetBlock == null) {
+            return;
         }
+
+        if (selectedBlock.getState() != Block.State.Idle ||
+                targetBlock.getState() != Block.State.Idle) {
+            return;
+        }
+
+        if (findMatches().isEmpty()) {
+            undoSwap();
+        } else {
+            deleteBlock(matchedGroups);
+            fallBlocks();
+        }
+        
+        isSwapping = false;
+        selectedBlock = null;
+        targetBlock = null;
+    }
+
+    void undoSwap() {
+        int selectedVert  = selectedBlock.getVert();
+        int selectedHorz  = selectedBlock.getHorz();
+
+        int targetVert = selectedVert;
+        int targetHorz = selectedHorz;
+
+        switch (direction) {
+            case LEFT:  targetVert += 1; break;
+            case RIGHT: targetVert -= 1; break;
+            case UP:    targetHorz -= 1; break;
+            case DOWN:  targetHorz += 1; break;
+            default: break;
+        }
+
+        targetBlock = grid[targetHorz][targetVert];
+
+        grid[selectedHorz][selectedVert] = targetBlock;
+        grid[targetHorz][targetVert] = selectedBlock;
+
+        selectedBlock.swapWith(targetBlock);
     }
 
     @Override
@@ -348,32 +357,16 @@ public class BlockController implements IGameObject {
         for (List<Block> matchGroup : matchedGroups) {
             for(Block b : matchGroup) {
                 scene.remove(b);
+                grid[b.getHorz()][b.getVert()] = null;
             }
         }
     }
     //-------------------------------------------------------------------------
 
     // 블록 하강 처리 -----------------------------------------------------------
-    public void fallBlocks() {
-        for (int x = 0; x < VERT; x++) {
-            for (int y = 0; y < HORZ - 1; y++) {
-                if (grid[x][y] == null) {
-                    // 위에서 블럭 찾아서 내려보냄
-                    for (int yy = y + 1; yy < HORZ; yy++) {
-                        if (grid[x][yy] != null) {
-                            Block fallingBlock = grid[x][yy];
-                            grid[x][y] = fallingBlock;
-                            grid[x][yy] = null;
 
-                            fallingBlock.setGridPosition(x, y);
-                            fallingBlock.setTargetPositionToGrid(); // 부드럽게 내려오도록
-                            fallingBlock.setState(Block.State.Swapping); // 상태도 Swapping으로
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+    public void fallBlocks() {
+
     }
 
     //-------------------------------------------------------------------------
