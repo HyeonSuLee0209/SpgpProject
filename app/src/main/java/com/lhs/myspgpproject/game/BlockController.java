@@ -79,7 +79,6 @@ public class BlockController implements IGameObject {
             undoSwap();
         } else {
             deleteBlock(matchedGroups);
-            fallBlocks();
         }
         
         isSwapping = false;
