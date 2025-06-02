@@ -37,6 +37,8 @@ public class BlockController implements IGameObject {
         }
     }
 
+    // 게임 시작 시 3개 연속으로 있는 것을 제거 ---------------------------------------
+
     public int checkStartBoard(int vert, int horz) {
         int type;
         do {
@@ -45,7 +47,6 @@ public class BlockController implements IGameObject {
 
         return type;
     }
-
     private boolean isSameAsPrevious(int vert, int horz, int type) {
         if (vert >= 2 && grid[horz][vert - 1] != null && grid[horz][vert - 2] != null) {
             if (grid[horz][vert - 1].getType() == type && grid[horz][vert - 2].getType() == type)
@@ -58,6 +59,17 @@ public class BlockController implements IGameObject {
         return false;
     }
 
+    // -------------------------------------------------------------------------
+
+    enum GameState {
+        IDLE,
+        SWAPPING,
+        MATCHING,
+        DELETING,
+        FALLING_AND_GENERATING,
+    }
+    private GameState gameState = GameState.IDLE;
+
     @Override
     public void update() {
         if(isBoard) {
@@ -66,47 +78,57 @@ public class BlockController implements IGameObject {
             return;
         }
 
-        if(!isSwapping || selectedBlock == null || targetBlock == null) {
-            return;
+        switch (gameState) {
+            case IDLE:
+                if(selectedBlock != null && targetBlock != null) {
+                    selectedBlock.swapWith(targetBlock);
+                    gameState = GameState.SWAPPING;
+                }
+                break;
+            case SWAPPING:
+                if(selectedBlock.getState() != Block.State.Swapping &&
+                   targetBlock.getState() != Block.State.Swapping) {
+                    gameState = GameState.MATCHING;
+                }
+                break;
+            case MATCHING:
+                if (findMatches().isEmpty()) {
+                    undoSwap();
+                    gameState = GameState.IDLE;
+                } else {
+                    gameState = GameState.DELETING;
+                }
+                break;
+            case DELETING:
+                deleteBlock(matchedGroups);
+                gameState = GameState.FALLING_AND_GENERATING;
+                break;
+            case FALLING_AND_GENERATING:
+                fallBlocks();
+                generateBlock();
+                gameState = GameState.IDLE;
+                break;
+            default:
+                break;
         }
-
-        if (selectedBlock.getState() != Block.State.Idle ||
-                targetBlock.getState() != Block.State.Idle) {
-            return;
-        }
-
-        if (findMatches().isEmpty()) {
-            undoSwap();
-        } else {
-            deleteBlock(matchedGroups);
-        }
-        
-        isSwapping = false;
-        selectedBlock = null;
-        targetBlock = null;
     }
 
     void undoSwap() {
-        int selectedVert  = selectedBlock.getVert();
-        int selectedHorz  = selectedBlock.getHorz();
+        if (selectedBlock == null || targetBlock == null) return;
 
-        int targetVert = selectedVert;
-        int targetHorz = selectedHorz;
+        int sVert = selectedBlock.getVert();
+        int sHorz = selectedBlock.getHorz();
+        int tVert = targetBlock.getVert();
+        int tHorz = targetBlock.getHorz();
 
-        switch (direction) {
-            case LEFT:  targetVert += 1; break;
-            case RIGHT: targetVert -= 1; break;
-            case UP:    targetHorz -= 1; break;
-            case DOWN:  targetHorz += 1; break;
-            default: break;
-        }
-
-        targetBlock = grid[targetHorz][targetVert];
-
-        grid[selectedHorz][selectedVert] = targetBlock;
-        grid[targetHorz][targetVert] = selectedBlock;
+        grid[sHorz][sVert] = targetBlock;
+        grid[tHorz][tVert] = selectedBlock;
 
         selectedBlock.swapWith(targetBlock);
+
+        // 스왑 후 초기화
+        selectedBlock = null;
+        targetBlock = null;
     }
 
     @Override
@@ -123,26 +145,14 @@ public class BlockController implements IGameObject {
 
     private static final float SWAP_TRIGGER_DISTANCE = 20f;
 
-    private boolean isSwappingInProgress() {
-        for (Block[] row : grid) {
-            for (Block element : row) {
-                if (element.getState() == Block.State.Swapping) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     private int toVert(float logicX) {
         return (int)(logicX / (Metrics.width / VERT));
     }
     private int toHorz(float logicY) {
         return (int)((Metrics.height - logicY) / (Block.RAD * 2));
     }
-    private boolean isSwapping = false;
     public boolean onTouchEvent(MotionEvent event) {
-        if (isSwappingInProgress()) return false;
+        if (gameState != GameState.IDLE) return false;
 
         float[] pos = Metrics.fromScreen(event.getX(), event.getY());
         float logicX = pos[0];
@@ -213,12 +223,6 @@ public class BlockController implements IGameObject {
                 // Grid 참조 먼저 바꿔줌
                 grid[selectedHorz][selectedVert] = targetBlock;
                 grid[targetHorz][targetVert] = selectedBlock;
-
-                // 각 블록 상태 갱신 및 위치 애니메이션 적용
-                selectedBlock.swapWith(targetBlock);
-
-                // 스와핑 시작 시
-                isSwapping = true;
                 break;
         }
 
@@ -283,6 +287,20 @@ public class BlockController implements IGameObject {
             }
         }
     }
+    private void findVerticalMatches(List<List<Block>> matchedGroups, boolean[][] visited) {
+        for (int x = 0; x < VERT; x++) {
+            for (int y = 0; y < HORZ - 2; ) {
+                int type = grid[y][x].getType();
+                int matchLen = countMatchingInColumn(x, y, type);
+
+                if (matchLen >= 3) {
+                    addMatchToGroup(matchedGroups, visited, y, x, matchLen, false);
+                }
+
+                y += Math.max(matchLen, 1);
+            }
+        }
+    }
     private int countMatchingInRow(int y, int x, int type) {
         int matchLen = 1;
         for (int k = x + 1; k < VERT; k++) {
@@ -300,20 +318,6 @@ public class BlockController implements IGameObject {
             } else break;
         }
         return matchLen;
-    }
-    private void findVerticalMatches(List<List<Block>> matchedGroups, boolean[][] visited) {
-        for (int x = 0; x < VERT; x++) {
-            for (int y = 0; y < HORZ - 2; ) {
-                int type = grid[y][x].getType();
-                int matchLen = countMatchingInColumn(x, y, type);
-
-                if (matchLen >= 3) {
-                    addMatchToGroup(matchedGroups, visited, y, x, matchLen, false);
-                }
-
-                y += Math.max(matchLen, 1);
-            }
-        }
     }
     private void addMatchToGroup(List<List<Block>> matchedGroups, boolean[][] visited, int y, int x, int matchLen, boolean isRow) {
         List<Block> match = new ArrayList<>();
@@ -364,10 +368,24 @@ public class BlockController implements IGameObject {
 
     // 블록 하강 처리 -----------------------------------------------------------
 
-    public void fallBlocks() {
+    private void fallBlocks() {
+//        for (int y = 1; y < VERT; y++) {
+//            for (int x = 0; x < HORZ; x++) {
+//                Block b = grid[x][y];
+//                if (b == null) continue;
+//
+//                if (grid[x][y - 1] == null) {
+//                    // 아래가 비었으므로 낙하
+//                    grid[x][y] = null;
+//                    grid[x][y - 1] = b;
+//                }
+//            }
+//        }
+    }
+
+    private void generateBlock() {
 
     }
 
     //-------------------------------------------------------------------------
-    
 }
