@@ -98,10 +98,13 @@ public class BlockController implements IGameObject {
                 } else {
                     gameState = GameState.DELETING;
                 }
+
+                selectedBlock = null;
+                targetBlock = null;
                 break;
             case DELETING:
                 deleteBlock(matchedGroups);
-                gameState = GameState.FALLING_AND_GENERATING;
+                gameState = GameState.IDLE;
                 break;
             case FALLING_AND_GENERATING:
                 fallBlocks();
@@ -125,10 +128,6 @@ public class BlockController implements IGameObject {
         grid[tHorz][tVert] = selectedBlock;
 
         selectedBlock.swapWith(targetBlock);
-
-        // 스왑 후 초기화
-        selectedBlock = null;
-        targetBlock = null;
     }
 
     @Override
