@@ -25,7 +25,7 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     };
     protected RectF collisionRect = new RectF();
     private int type;
-    private int vert, horz;
+    private int gridX, gridY;
     private float x, y;
 
     // 블럭 상태 ---------------------------------------------------------------
@@ -38,21 +38,21 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     public State getState() { return state; }
     public void setState(State state) { this.state = state; }
     // -----------------------------------------------------------------------
-    public static Block get(int type, int vert, int horz) {
-        return Scene.top().getRecyclable(Block.class).init(type, vert, horz);
+    public static Block get(int type, int gridX, int gridY) {
+        return Scene.top().getRecyclable(Block.class).init(type, gridX, gridY);
     }
     public Block() {
         super(0, 0, 0);
     }
-    private Block init(int type, int vert, int horz) {
+    private Block init(int type, int gridX, int gridY) {
         this.setImageResourceId(resIds[type], 10);
         this.type = type;
-        this.vert = vert;
-        this.horz = horz;
-        this.x = vertToX(vert);
-        this.y = horzToY(horz);
+        this.gridX = gridX;
+        this.gridY = gridY;
+        this.x = gridXToX(gridX);
+        this.y = gridYToY(gridY);
 
-        setPosition(vertToX(vert), horzToY(horz), RADIUS);
+        setPosition(gridXToX(gridX), gridYToY(gridY), RADIUS);
         return this;
     }
 
@@ -90,6 +90,7 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     }
 
     private void handleFalling() {
+
     }
 
 
@@ -122,12 +123,12 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
         return MainScene.Layer.block;
     }
 
-    private float vertToX(int vert) {
-        return Metrics.width / HORZ * (vert + 0.5f);
+    private float gridXToX(int gridX) {
+        return Metrics.width / HORZ * (gridX + 0.5f);
     }
 
-    private float horzToY(int horz) {
-        return Metrics.height - (horz + 0.5f) * RADIUS * 2;
+    private float gridYToY(int gridY) {
+        return Metrics.height - (gridY + 0.5f) * RADIUS * 2;
     }
 
     public int getType() {
@@ -171,23 +172,24 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
         setPosition(startX + dx, startY + dy, RADIUS * seletedScale);
     }
     public void endDrag() {
-        setPosition(vertToX(vert), horzToY(horz), RADIUS);
+        setPosition(gridXToX(gridX), gridYToY(gridY), RADIUS);
     }
 
     // ------------------------------------------------------------------
     
     // 블록 교환-----------------------------------------------------------
-    public int getVert() {
-        return vert;
+    public int getGridX() {
+        return gridX;
     }
 
-    public int getHorz() {
-        return horz;
+    public int getGridY() {
+        return gridY;
     }
 
-    public void setGridPosition(int vert, int horz) {
-        this.vert = vert;
-        this.horz = horz;
+
+    public void setGridPosition(int gridX, int gridY) {
+        this.gridX = gridX;
+        this.gridY = gridY;
     }
 
     // ------------------------------------------------------------------
@@ -209,15 +211,15 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     }
 
     public void setTargetPositionToGrid() {
-        this.setTargetPosition(vertToX(vert), horzToY(horz));
+        this.setTargetPosition(gridXToX(gridX), gridYToY(gridY));
     }
 
     public void swapWith(Block other) {
-        int tempVert = this.vert;
-        int tempHorz = this.horz;
+        int tempgridX = this.gridX;
+        int tempgridY = this.gridY;
 
-        this.setGridPosition(other.vert, other.horz);
-        other.setGridPosition(tempVert, tempHorz);
+        this.setGridPosition(other.gridX, other.gridY);
+        other.setGridPosition(tempgridX, tempgridY);
 
         this.setTargetPositionToGrid();
         other.setTargetPositionToGrid();
