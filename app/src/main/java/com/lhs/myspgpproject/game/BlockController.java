@@ -150,11 +150,12 @@
 
         private static final float SWAP_TRIGGER_DISTANCE = 20f;
 
-        private int toGridX(float logicY) {
-            return (int)((Metrics.height - logicY) / (Block.RAD * 2));
-        }
-        private int toGridY(float logicX) {
+        private int toGridX(float logicX) {
             return (int)(logicX / (Metrics.width / GRID_Y));
+        }
+
+        private int toGridY(float logicY) {
+            return (int)((Metrics.height - logicY) / (Block.RAD * 2));
         }
 
         public boolean onTouchEvent(MotionEvent event) {
@@ -169,13 +170,14 @@
                     int gridX = toGridX(logicX);
                     int gridY = toGridY(logicY);
 
+                    Log.d(TAG, "x = " + gridX + " y = " + gridY);
+
                     if (gridX < 0 || gridX >= GRID_X || gridY < 0 || gridY >= GRID_Y) {
                         return false;
                     }
 
                     selectedBlock = grid[gridX][gridY];
 
-                    Log.d(TAG, "x = " + gridX + " Y = " + gridY);
 
                     selectedBlock.startDrag(logicX, logicY);
                     break;
@@ -365,15 +367,15 @@
         // 블록 하강 처리 -----------------------------------------------------------
 
         private void fallBlocks() {
-            for (int x = 0; x < GRID_X; x++) {
-                for (int y = 0; y < GRID_Y; y++) {
-                    if (grid[x][y] == null) {
-                        int targetGridX = grid[x][y].getGridX();
-                        int targetGridY = grid[x][y].getGridY() + 1;
-
-                    }
-                }
-            }
+//            for (int x = 0; x < GRID_X; x++) {
+//                for (int y = 0; y < GRID_Y; y++) {
+//                    if (grid[x][y] == null) {
+//                        int targetGridX = grid[x][y].getGridX();
+//                        int targetGridY = grid[x][y].getGridY() + 1;
+//
+//                    }
+//                }
+//            }
 
             targetBlock = null;
         }
