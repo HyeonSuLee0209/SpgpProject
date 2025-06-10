@@ -32,7 +32,6 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     public enum State {
         Idle,
         Swapping,
-        Falling,
     }
     private State state = State.Idle;
     public State getState() { return state; }
@@ -67,9 +66,6 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
             case Swapping:
                 handleSwapping();
                 break;
-            case Falling:
-                handleFalling();
-                break;
             default:
                 break;
         }
@@ -88,11 +84,6 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
             moveTowardsTarget(dx, dy, distance);
         }
     }
-
-    private void handleFalling() {
-
-    }
-
 
     private void moveTowardsTarget(float dx, float dy, float distance) {
         float moveDist = MOVE_SPEED * GameView.frameTime;
@@ -215,11 +206,11 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     }
 
     public void swapWith(Block other) {
-        int tempgridX = this.gridX;
-        int tempgridY = this.gridY;
+        int tempGridX = this.gridX;
+        int tempGridY = this.gridY;
 
         this.setGridPosition(other.gridX, other.gridY);
-        other.setGridPosition(tempgridX, tempgridY);
+        other.setGridPosition(tempGridX, tempGridY);
 
         this.setTargetPositionToGrid();
         other.setTargetPositionToGrid();

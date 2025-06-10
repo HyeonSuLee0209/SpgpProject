@@ -15,6 +15,7 @@ import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.GameView;
 
 public class Sprite implements IGameObject {
     private static final String TAG = Sprite.class.getSimpleName();
+
     protected Bitmap bitmap;
     protected Rect srcRect = null;
     protected final RectF dstRect = new RectF();
@@ -35,6 +36,9 @@ public class Sprite implements IGameObject {
     public void setImageResourceId(int mipmapId) {
         bitmap = BitmapPool.get(mipmapId);
     }
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
     public void setPosition(float x, float y, float radius) {
         this.x = x;
         this.y = y;
@@ -42,6 +46,11 @@ public class Sprite implements IGameObject {
         this.radius = radius;
         RectUtil.setRect(dstRect, x, y, radius);
 
+    }
+    public void setPosition(float x, float y) {
+        this.x = x;
+        this.y = y;
+        RectUtil.setRect(dstRect, x, y, width, height);
     }
     public void setPosition(float x, float y, float width, float height) {
         this.x = x;
@@ -51,12 +60,24 @@ public class Sprite implements IGameObject {
         radius = Math.min(width, height) / 2;
         RectUtil.setRect(dstRect, x, y, width, height);
     }
+
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
     public float getWidth() {
         return width;
     }
 
     public float getHeight() {
         return height;
+    }
+    public float getRadius() {
+        return radius;
     }
     public float getPropotionalHeight(float width) {
         return width / bitmap.getWidth() * bitmap.getHeight();
@@ -80,5 +101,4 @@ public class Sprite implements IGameObject {
     public String toString() {
         return getClass().getSimpleName() + "@" + System.identityHashCode(this) + "(" + (int)width + "x" + (int)height + ")";
     }
-
 }
