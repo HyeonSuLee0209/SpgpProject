@@ -287,50 +287,7 @@
         }
 
         private void findMatchesInDirection(boolean horizontal, boolean[][] visited) {
-            int outerLimit = horizontal ? GRID_X : GRID_Y;
-            int innerLimit = horizontal ? GRID_Y : GRID_X;
 
-            for (int outer = 0; outer < outerLimit; outer++) {
-                for (int inner = 0; inner < innerLimit - 2;) {
-                    int x = horizontal ? outer : inner;
-                    int y = horizontal ? inner : outer;
-
-                    Block current = grid[x][y];
-                    if (current == null) {
-                        inner++;
-                        continue;
-                    }
-
-                    int type = current.getType();
-                    int matchLen = 1;
-
-                    for (int k = 1; inner + k < innerLimit; k++) {
-                        int nx = horizontal ? outer : inner + k;
-                        int ny = horizontal ? inner + k : outer;
-
-                        Block next = grid[nx][ny];
-                        if (next != null && next.getType() == type) {
-                            matchLen++;
-                        } else break;
-                    }
-
-                    if (matchLen >= 3) {
-                        List<Block> match = new ArrayList<>();
-                        for (int i = 0; i < matchLen; i++) {
-                            int mx = horizontal ? outer : inner + i;
-                            int my = horizontal ? inner + i : outer;
-
-                            if (!visited[mx][my]) {
-                                match.add(grid[mx][my]);
-                                visited[mx][my] = true;
-                            }
-                        }
-                        matchedGroups.add(match);
-                    }
-
-                    inner += Math.max(matchLen, 1); // 중복 검사 방지
-                }
-            }
         }
 
         private boolean isTShape(List<Block> blocks) {
