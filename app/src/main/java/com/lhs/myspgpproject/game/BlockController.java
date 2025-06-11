@@ -48,15 +48,18 @@
             return type;
         }
         private boolean isSameAsPrevious(int x, int y, int type) {
-            if((x == 0 || x == 1) && (y == 0 || y == 1)) return false;
-
-            if (grid[x][y - 1] != null && grid[x][y - 2] != null) {
-                if (grid[x][y - 1].getType() == type && grid[x][y - 2].getType() == type)
-                    return true;
+            if(y >= 2) {
+                if (grid[x][y - 1] != null && grid[x][y - 2] != null) {
+                    if (grid[x][y - 1].getType() == type && grid[x][y - 2].getType() == type)
+                        return true;
+                }
             }
-            if (grid[x - 1][y] != null && grid[x - 2][y] != null) {
-                if (grid[x - 1][y].getType() == type && grid[x - 2][y].getType() == type)
-                    return true;
+
+            if(x >= 2) {
+                if (grid[x - 1][y] != null && grid[x - 2][y] != null) {
+                    if (grid[x - 1][y].getType() == type && grid[x - 2][y].getType() == type)
+                        return true;
+                }
             }
             return false;
         }
@@ -375,15 +378,13 @@
         // 블록 하강 처리 -----------------------------------------------------------
 
         private void fallBlocks() {
-//            for (int x = 0; x < GRID_X; x++) {
-//                for (int y = 0; y < GRID_Y; y++) {
-//                    if (grid[x][y] == null) {
-//                        int targetGridX = grid[x][y].getGridX();
-//                        int targetGridY = grid[x][y].getGridY() + 1;
-//
-//                    }
-//                }
-//            }
+            for (int x = 0; x < GRID_X; x++) {
+                for (int y = 0; y < GRID_Y; y++) {
+                    if (grid[x][y] == null) {
+
+                    }
+                }
+            }
 
             targetBlock = null;
         }
