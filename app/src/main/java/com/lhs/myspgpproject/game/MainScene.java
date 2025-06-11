@@ -1,10 +1,17 @@
 package com.lhs.myspgpproject.game;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import com.lhs.myspgpproject.R;
+import com.lhs.myspgpproject.app.MainActivity;
+
+import kr.ac.tukorea.ge.spgp2025.a2dg.framework.objects.Button;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.objects.Score;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.scene.Scene;
+import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.GameView;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.Metrics;
 
 
@@ -13,10 +20,8 @@ public class MainScene extends Scene {
     private final Score score;
     private final LimitTime limitTime; // 60초 제한 시간
 
-    private final Reset reset;
-
     public enum Layer {
-        block, ui, controller;
+        block, ui, controller, touch;
         public static final int COUNT = values().length;
     }
     public MainScene() {
@@ -34,10 +39,26 @@ public class MainScene extends Scene {
         limitTime.setLimitTime(120);
         add(Layer.ui, limitTime);
 
-        this.reset = new Reset(R.mipmap.reset, 670f, 15f);
-        add(Layer.ui, reset);
-
         add(Layer.controller, new BlockController(this));
+
+        add(Layer.touch, new Button(R.mipmap.reset, 720f, 65f, 100f, 100f, new Button.OnTouchListener() {
+            @Override
+            public boolean onTouch(boolean pressed) {
+                new AlertDialog.Builder(GameView.view.getContext())
+                        .setTitle("Confirm")
+                        .setMessage("Do you really want to reset the game?")
+                        .setNegativeButton("No", null)
+                        .setPositiveButton("Reset", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                popAll();
+                            }
+                        })
+                        .create()
+                        .show();
+                return false;
+            }
+        }));
     }
 
     public LimitTime getLimitTime() {
@@ -47,6 +68,13 @@ public class MainScene extends Scene {
     // Overridables
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (super.onTouchEvent(event)) return true;
+
         return BlockController.getInstance().onTouchEvent(event);
+    }
+
+    @Override
+    protected int getTouchLayerIndex() {
+        return Layer.touch.ordinal();
     }
 }

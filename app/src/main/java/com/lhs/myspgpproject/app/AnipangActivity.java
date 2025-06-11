@@ -5,7 +5,6 @@ import android.os.Bundle;
 import com.lhs.myspgpproject.BuildConfig;
 import com.lhs.myspgpproject.game.LimitTime;
 import com.lhs.myspgpproject.game.MainScene;
-import com.lhs.myspgpproject.game.Reset;
 
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.activity.GameActivity;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.GameView;
