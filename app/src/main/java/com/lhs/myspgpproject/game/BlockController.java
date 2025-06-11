@@ -39,24 +39,23 @@
 
         // 게임 시작 시 3개 연속으로 있는 것을 제거 ---------------------------------------
 
-        public int checkStartBoard(int x, int y) {
+        public int checkStartBoard(int vert, int horz) {
             int type;
             do {
                 type = random.nextInt(TYPE_NUMS);
-            } while (isSameAsPrevious(x, y, type));
+            } while (isSameAsPrevious(vert, horz, type));
 
             return type;
         }
-        private boolean isSameAsPrevious(int x, int y, int type) {
-            if (x >= 2 && grid[x - 1][y] != null && grid[x - 2][y] != null) {
-                if (grid[x - 1][y].getType() == type && grid[x - 2][y].getType() == type)
+        private boolean isSameAsPrevious(int vert, int horz, int type) {
+            if (vert >= 2 && grid[horz][vert - 1] != null && grid[horz][vert - 2] != null) {
+                if (grid[horz][vert - 1].getType() == type && grid[horz][vert - 2].getType() == type)
                     return true;
             }
-            if (y >= 2 && grid[x][y - 1] != null && grid[x][y - 2] != null) {
-                if (grid[x][y - 1].getType() == type && grid[x][y - 2].getType() == type)
+            if (horz >= 2 && grid[horz - 1][vert] != null && grid[horz - 2][vert] != null) {
+                if (grid[horz - 1][vert].getType() == type && grid[horz - 2][vert].getType() == type)
                     return true;
             }
-
             return false;
         }
 
@@ -96,7 +95,7 @@
                 case FALLING_AND_GENERATING:
                     fallBlocks();
                     generateBlock();
-                    gameState = GameState.MATCHING;
+                    gameState = GameState.IDLE;
                     break;
                 default:
                     break;
@@ -277,69 +276,24 @@
 
         private List<List<Block>> findMatches() {
             matchedGroups.clear();
+            boolean[][] visited = new boolean[GRID_X][GRID_Y];
 
             // 가로, 세로 모두 탐색
-            findMatchesInDirection(true);  // 가로
-            findMatchesInDirection(false); // 세로
+            findMatchesInDirection(true, visited);  // 가로
+            findMatchesInDirection(false, visited); // 세로
 
             categorizeMatches(matchedGroups);
             return matchedGroups;
         }
 
-        private void findMatchesInDirection(boolean horizontal) {
-            int outerLimit = horizontal ? GRID_X : GRID_Y;
-            int innerLimit = horizontal ? GRID_Y : GRID_X;
-            boolean[][] visited = new boolean[GRID_X][GRID_Y];
+        private void findMatchesInDirection(boolean horizontal, boolean[][] visited) {
 
-            for (int outer = 0; outer < outerLimit; outer++) {
-                int count = 0;
-                int lastType = -1;
-                List<Block> buffer = new ArrayList<>();
-
-                for (int inner = 0; inner < innerLimit; inner++) {
-                    int x = horizontal ? outer : inner;
-                    int y = horizontal ? inner : outer;
-
-                    Block block = grid[x][y];
-                    int type = (block != null) ? block.getType() : -1;
-
-                    if (type == lastType && block != null) {
-                        buffer.add(block);
-                        count++;
-                    } else {
-                        if (count >= 3) {
-                            addIfNotVisited(buffer, visited);
-                        }
-                        buffer.clear();
-                        if (block != null) buffer.add(block);
-                        count = 1;
-                        lastType = type;
-                    }
-                }
-
-                // 마지막에도 체크
-                if (count >= 3) {
-                    addIfNotVisited(buffer, visited);
-                }
-            }
-        }
-
-        private void addIfNotVisited(List<Block> blocks, boolean[][] visited) {
-            List<Block> group = new ArrayList<>();
-            for (Block b : blocks) {
-                int x = b.getGridX();
-                int y = b.getGridY();
-                if (!visited[x][y]) {
-                    group.add(b);
-                    visited[x][y] = true;
-                }
-            }
-            if (group.size() >= 3) {
-                matchedGroups.add(group);
-            }
         }
 
         private boolean isTShape(List<Block> blocks) {
+//        if (blocks.size() == 5) {
+//            return true;
+//        }
             return false;
         }
 
@@ -370,18 +324,15 @@
         // 블록 하강 처리 -----------------------------------------------------------
 
         private void fallBlocks() {
-            for (int x = 0; x < GRID_X; x++) {
-                for (int y = 0; y < GRID_Y - 1; y++) {
-                    if (grid[x][y] != null) continue;
-                    Block falling = grid[x][y + 1];
-
-                    grid[x][y].setGridPosition(falling.getGridX(), falling.getGridY());
-                    grid[x][y].setTargetPositionToGrid();
-                    grid[x][y].setState(Block.State.Swapping);
-
-                    grid[x][y + 1] = null;
-                }
-            }
+//            for (int x = 0; x < GRID_X; x++) {
+//                for (int y = 0; y < GRID_Y; y++) {
+//                    if (grid[x][y] == null) {
+//                        int targetGridX = grid[x][y].getGridX();
+//                        int targetGridY = grid[x][y].getGridY() + 1;
+//
+//                    }
+//                }
+//            }
 
             targetBlock = null;
         }

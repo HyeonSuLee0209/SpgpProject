@@ -3,8 +3,6 @@ package com.lhs.myspgpproject.game;
 import android.view.MotionEvent;
 
 import com.lhs.myspgpproject.R;
-
-import kr.ac.tukorea.ge.spgp2025.a2dg.framework.objects.Button;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.objects.Score;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.scene.Scene;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.Metrics;
@@ -15,8 +13,10 @@ public class MainScene extends Scene {
     private final Score score;
     private final LimitTime limitTime; // 60초 제한 시간
 
+    private final Reset reset;
+
     public enum Layer {
-        block, ui, controller, touch;
+        block, ui, controller;
         public static final int COUNT = values().length;
     }
     public MainScene() {
@@ -34,12 +34,8 @@ public class MainScene extends Scene {
         limitTime.setLimitTime(120);
         add(Layer.ui, limitTime);
 
-        add(Layer.touch, new Button(R.mipmap.reset, 885, 100f, 670f, 15f, new Button.OnTouchListener() {
-            @Override
-            public boolean onTouch(boolean pressed) {
-                return false;
-            }
-        }));
+        this.reset = new Reset(R.mipmap.reset, 670f, 15f);
+        add(Layer.ui, reset);
 
         add(Layer.controller, new BlockController(this));
     }
