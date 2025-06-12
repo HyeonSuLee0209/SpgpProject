@@ -1,5 +1,6 @@
 package kr.ac.tukorea.ge.spgp2025.a2dg.framework.objects;
 
+import android.util.Log;
 import android.view.MotionEvent;
 
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.interfaces.ITouchable;
@@ -19,19 +20,28 @@ public class Button extends Sprite implements ITouchable {
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         int action = e.getAction();
-        //Log.d(TAG, "onTouch:" + this + " action=" + action);
-        if (action == MotionEvent.ACTION_DOWN) {
-            float[] pts = Metrics.fromScreen(e.getX(), e.getY());
-            float x = pts[0], y = pts[1];
-            if (!dstRect.contains(x, y)) {
+//        Log.d(TAG, "onTouch:" + this + " action=" + action);
+
+        float[] pts = Metrics.fromScreen(e.getX(), e.getY());
+        float x = pts[0], y = pts[1];
+
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                if (!dstRect.contains(x, y)) {
+                    captures = false;
+                    return false;
+                }
+                captures = true;
+                return listener.onTouch(true);
+            case MotionEvent.ACTION_UP:
+                if (captures && dstRect.contains(x, y)) {
+                    captures = false;
+                    return listener.onTouch(false);
+                }
+                captures = false;
                 return false;
-            }
-            captures = true;
-            return listener.onTouch(true);
-        } else if (action == MotionEvent.ACTION_UP) {
-            captures = false;
-            return listener.onTouch(false);
+            default:
+                return false;
         }
-        return captures;
     }
 }

@@ -20,6 +20,11 @@ public class MainScene extends Scene {
     private final Score score;
     private final LimitTime limitTime; // 60초 제한 시간
 
+    private boolean resetButtonPressed = false;
+    private final float resetX = 720f;
+    private final float resetY = 65f;
+    private final float resetSize = 100f;
+
     public enum Layer {
         block, ui, controller, touch;
         public static final int COUNT = values().length;
@@ -41,7 +46,9 @@ public class MainScene extends Scene {
 
         add(Layer.controller, new BlockController(this));
 
-        add(Layer.touch, new Button(R.mipmap.reset, 720f, 65f, 100f, 100f, new Button.OnTouchListener() {
+        boolean resetPressedDownInside = false;
+
+        add(Layer.touch, new Button(R.mipmap.reset, resetX, resetY, resetSize, resetSize, new Button.OnTouchListener() {
             @Override
             public boolean onTouch(boolean pressed) {
                 new AlertDialog.Builder(GameView.view.getContext())
@@ -59,6 +66,14 @@ public class MainScene extends Scene {
                 return false;
             }
         }));
+
+        add(Layer.touch, new Button(R.mipmap.btn_pause, 840f, 65f, 100f, 100f, new Button.OnTouchListener() {
+            @Override
+            public boolean onTouch(boolean pressed) {
+//                new PauseScene().push();
+                return false;
+            }
+        }));
     }
 
     public LimitTime getLimitTime() {
@@ -68,7 +83,7 @@ public class MainScene extends Scene {
     // Overridables
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (super.onTouchEvent(event)) return true;
+        if(super.onTouchEvent(event)) return true;
 
         return BlockController.getInstance().onTouchEvent(event);
     }
