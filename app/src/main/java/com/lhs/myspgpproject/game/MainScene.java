@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 import com.lhs.myspgpproject.R;
+import com.lhs.myspgpproject.game.PauseScene;
 import com.lhs.myspgpproject.app.MainActivity;
 
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.objects.Button;
@@ -23,7 +24,7 @@ public class MainScene extends Scene {
     private boolean resetButtonPressed = false;
     private final float resetX = 720f;
     private final float resetY = 65f;
-    private final float resetSize = 100f;
+    private final float btnSize = 100f;
 
     public enum Layer {
         block, ui, controller, touch;
@@ -48,7 +49,7 @@ public class MainScene extends Scene {
 
         boolean resetPressedDownInside = false;
 
-        add(Layer.touch, new Button(R.mipmap.reset, resetX, resetY, resetSize, resetSize, new Button.OnTouchListener() {
+        add(Layer.touch, new Button(R.mipmap.reset, resetX, resetY, btnSize, btnSize, new Button.OnTouchListener() {
             @Override
             public boolean onTouch(boolean pressed) {
                 new AlertDialog.Builder(GameView.view.getContext())
@@ -67,10 +68,10 @@ public class MainScene extends Scene {
             }
         }));
 
-        add(Layer.touch, new Button(R.mipmap.btn_pause, 840f, 65f, 100f, 100f, new Button.OnTouchListener() {
+        add(Layer.touch, new Button(R.mipmap.btn_pause, 840f, 65f, btnSize, btnSize, new Button.OnTouchListener() {
             @Override
             public boolean onTouch(boolean pressed) {
-//                new PauseScene().push();
+                new PauseScene().push();
                 return false;
             }
         }));
