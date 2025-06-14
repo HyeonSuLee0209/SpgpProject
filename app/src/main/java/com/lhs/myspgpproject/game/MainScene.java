@@ -21,7 +21,6 @@ public class MainScene extends Scene {
     private final Score score;
     private final LimitTime limitTime; // 60초 제한 시간
 
-    private boolean resetButtonPressed = false;
     private final float resetX = 720f;
     private final float resetY = 65f;
     private final float btnSize = 100f;
@@ -46,8 +45,6 @@ public class MainScene extends Scene {
         add(Layer.ui, limitTime);
 
         add(Layer.controller, new BlockController(this));
-
-        boolean resetPressedDownInside = false;
 
         add(Layer.touch, new Button(R.mipmap.reset, resetX, resetY, btnSize, btnSize, new Button.OnTouchListener() {
             @Override

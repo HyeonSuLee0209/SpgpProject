@@ -20,6 +20,9 @@
         private Block[][] grid = new Block[GRID_X][GRID_Y];
         private static final int TYPE_NUMS = 7;
         private static MainScene scene;
+
+        private final List<Block> pendingDeletions = new ArrayList<>();
+
         public BlockController(MainScene mainScene) {
             this.scene = mainScene;
             instance = this;
@@ -32,7 +35,7 @@
 
                     Block block = Block.get(type, x, y);
                     grid[x][y] = block;
-                    scene.add(block);
+                    scene.add(block.getLayer(), block);
                 }
             }
         }
@@ -77,9 +80,12 @@
 
         @Override
         public void update() {
+            processPendingDeletions();
+
             if(isBoard) {
                 generateBoard();
                 isBoard = false;
+                gameState = GameState.MATCHING;
                 return;
             }
 
@@ -94,13 +100,16 @@
                     handleMatching();
                     break;
                 case DELETING:
-                    deleteBlock(matchedGroups);
+                    collectBlocksForDeletion(matchedGroups);
                     gameState = GameState.FALLING_AND_GENERATING;
                     break;
                 case FALLING_AND_GENERATING:
                     fallBlocks();
                     generateBlock();
-                    gameState = GameState.MATCHING;
+
+                    if(allBlocksIdle()) {
+                        gameState = GameState.MATCHING;
+                    }
                     break;
                 default:
                     break;
@@ -115,6 +124,13 @@
         }
 
         public void handleSwapping() {
+            if(selectedBlock == null || targetBlock == null) {
+                gameState = GameState.IDLE;
+                selectedBlock = null;
+                targetBlock = null;
+                return;
+            }
+
             if(selectedBlock.getState() != Block.State.Swapping &&
                     targetBlock.getState() != Block.State.Swapping) {
                 gameState = GameState.MATCHING;
@@ -123,7 +139,9 @@
 
         public void handleMatching() {
             if (findMatches().isEmpty()) {
-                undoSwap();
+                if(selectedBlock != null && targetBlock != null) {
+                    undoSwap();
+                }
                 gameState = GameState.IDLE;
             } else {
                 gameState = GameState.DELETING;
@@ -131,6 +149,18 @@
 
             selectedBlock = null;
             targetBlock = null;
+        }
+
+        private boolean allBlocksIdle() {
+            for (int x = 0; x < GRID_X; x++) {
+                for (int y = 0; y < GRID_Y; y++) {
+                    Block block = grid[x][y];
+                    if (block != null && block.getState() != Block.State.Idle) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         void undoSwap() {
@@ -156,7 +186,7 @@
         private static final float SWAP_TRIGGER_DISTANCE = 20f;
 
         private int toGridX(float logicX) {
-            return (int)(logicX / (Metrics.width / GRID_Y));
+            return (int)(logicX / (Metrics.width / GRID_X));
         }
 
         private int toGridY(float logicY) {
@@ -183,6 +213,7 @@
 
                     selectedBlock = grid[gridX][gridY];
 
+                    if(selectedBlock == null) return false;
 
                     selectedBlock.startDrag(logicX, logicY);
                     break;
@@ -199,8 +230,8 @@
                     float upLogicX = pos[0];
                     float upLogicY = pos[1];
 
-                    float startX = selectedBlock.getStartX();
-                    float startY = selectedBlock.getStartY();
+                    float startX = selectedBlock.getStartDragLogicX();
+                    float startY = selectedBlock.getStartDragLogicY();
 
                     float dx = upLogicX - startX;
                     float dy = upLogicY - startY;
@@ -208,13 +239,10 @@
 
                     if (dragDistance < SWAP_TRIGGER_DISTANCE) {
                         selectedBlock = null;
-                        return false; // 거리가 짧으면 스왑 안 함
+                        return false;
                     }
 
-                    float centerX = selectedBlock.getX();
-                    float centerY = selectedBlock.getY();
-
-                    direction = getSwipeDirection(centerX, centerY, upLogicX, upLogicY);
+                    direction = getSwipeDirection(startX, startY, upLogicX, upLogicY);
                     int selectedGridX  = selectedBlock.getGridX();
                     int selectedGridY  = selectedBlock.getGridY();
 
@@ -226,17 +254,26 @@
                         case RIGHT: targetGridX += 1; break;
                         case UP:    targetGridY += 1; break;
                         case DOWN:  targetGridY -= 1; break;
-                        default: return false; // 움직이지 않았으면 리턴
+                        default:
+                            selectedBlock = null;
+                            return false; // 움직이지 않았으면 리턴
                     }
 
                     if (targetGridX < 0 || targetGridX >= GRID_X || targetGridY < 0 || targetGridY >= GRID_Y) {
+                        selectedBlock = null;
                         return false;
                     }
 
                     targetBlock = grid[targetGridX][targetGridY];
 
-                    // Grid 참조 먼저 바꿔줌
+                    if(targetBlock == null) {
+                        selectedBlock = null;
+                        return false;
+                    }
+
                     swapGrid(selectedBlock, targetBlock);
+                    selectedBlock.swapWith(targetBlock);
+                    gameState = GameState.SWAPPING;
                     break;
             }
 
@@ -248,6 +285,9 @@
             int bx = b.getGridX(), by = b.getGridY();
             grid[ax][ay] = b;
             grid[bx][by] = a;
+
+            a.setGridPosition(bx, by);
+            b.setGridPosition(ax, ay);
         }
 
         public static void setBoardFlag(boolean value) {
@@ -365,13 +405,30 @@
             }
         }
 
-        private void deleteBlock(List<List<Block>> matchedGroups) {
+        private void collectBlocksForDeletion(List<List<Block>> matchedGroups) {
             for (List<Block> matchGroup : matchedGroups) {
                 for(Block b : matchGroup) {
-                    scene.remove(b);
-                    grid[b.getGridX()][b.getGridY()] = null;
+                    if (b != null && !pendingDeletions.contains(b)) {
+                        pendingDeletions.add(b);
+                    }
+                    if (b != null) {
+                        grid[b.getGridX()][b.getGridY()] = null;
+                    }
                 }
             }
+        }
+
+        private void processPendingDeletions() {
+            if (pendingDeletions.isEmpty()) {
+                return;
+            }
+            // Log.d(TAG, "Processing " + pendingDeletions.size() + " pending deletions.");
+            for (Block b : pendingDeletions) {
+                if (b != null) {
+                    scene.remove(MainScene.Layer.block, b);
+                }
+            }
+            pendingDeletions.clear();
         }
         //-------------------------------------------------------------------------
 
@@ -379,6 +436,14 @@
 
         private void fallBlocks() {
             for (int x = 0; x < GRID_X; x++) {
+                int emptyCount = 0;
+
+                for (int y = 0; y < GRID_Y; y++) {
+                    if (grid[x][y] == null) {
+                        emptyCount++;
+                    }
+                }
+
                 for (int y = 0; y < GRID_Y; y++) {
                     if (grid[x][y] == null) {
                         for (int k = y + 1; k < GRID_Y; k++) {
@@ -397,14 +462,40 @@
                     }
                 }
             }
-
-            targetBlock = null;
         }
 
         private void generateBlock() {
             for (int x = 0; x < GRID_X; x++) {
-                for(int y = 0; y < GRID_Y; y++) {
+                int emptyCount = 0;
 
+                for(int y = 0; y < GRID_Y; y++) {
+                    if (grid[x][y] == null) {
+                        emptyCount++;
+                    }
+                }
+
+                if (emptyCount > 0) {
+                    int currentSpawnIndex = 0;
+
+                    for (int y = 0; y < GRID_Y; y++) {
+                        if (grid[x][y] == null) {
+                            int type = random.nextInt(TYPE_NUMS);
+
+                            float spawnYInGrid = GRID_Y + (emptyCount - 1) - currentSpawnIndex;
+                            Block newBlock = Block.get(type, x, (int)spawnYInGrid);
+
+                            grid[x][y] = newBlock;
+                            scene.add(newBlock.getLayer(), newBlock);
+
+                            newBlock.setTargetPosition(
+                                    Metrics.width / GRID_X * (x + 0.5f),
+                                    Metrics.height - (y + 0.5f) * Block.RAD * 2
+                            );
+
+                            newBlock.setState(Block.State.Swapping);
+                            currentSpawnIndex++;
+                        }
+                    }
                 }
             }
         }

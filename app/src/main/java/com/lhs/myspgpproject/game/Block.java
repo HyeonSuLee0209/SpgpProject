@@ -2,6 +2,7 @@ package com.lhs.myspgpproject.game;
 
 import android.graphics.Canvas;
 import android.graphics.RectF;
+import android.util.Log;
 
 import com.lhs.myspgpproject.R;
 
@@ -14,10 +15,12 @@ import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.GameView;
 import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.Metrics;
 
 public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, ILayerProvider<MainScene.Layer> {
+    private static final String TAG = Block.class.getSimpleName();
+
     private static final float RADIUS = 70f;
     public static final float RAD = RADIUS;
     public static final float seletedScale = 1.2f;
-    private static final float HORZ = 7;
+    private static final float GRID_X = 7;
     private static final int[] resIds = {
             R.mipmap.block_01, R.mipmap.block_02, R.mipmap.block_03,
             R.mipmap.block_04, R.mipmap.block_05, R.mipmap.block_06,
@@ -32,6 +35,7 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     public enum State {
         Idle,
         Swapping,
+        Dragging
     }
     private State state = State.Idle;
     public State getState() { return state; }
@@ -42,22 +46,30 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     }
     public Block() {
         super(0, 0, 0);
+        Log.v(TAG, "Created Block@ " + System.identityHashCode(this));
     }
     private Block init(int type, int gridX, int gridY) {
         this.setImageResourceId(resIds[type], 10);
         this.type = type;
         this.gridX = gridX;
         this.gridY = gridY;
+
         this.x = gridXToX(gridX);
         this.y = gridYToY(gridY);
 
-        setPosition(gridXToX(gridX), gridYToY(gridY), RADIUS);
+        setPosition(this.x, this.y, RADIUS);
+
+        this.state = State.Idle;
+        this.targetX = this.x;
+        this.targetY = this.y;
+
         return this;
     }
 
     @Override
     public void update() {
         super.update();
+
         updateCollisionRect();
 
         switch (state) {
@@ -66,12 +78,15 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
             case Swapping:
                 handleSwapping();
                 break;
+            case Dragging:
+                break;
             default:
                 break;
         }
     }
 
     private static final float SWAPPING_THRESHOLD = 10f;
+
     private void handleSwapping() {
         float dx = targetX - x;
         float dy = targetY - y;
@@ -81,15 +96,13 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
             setPosition(targetX, targetY, RADIUS);
             setState(State.Idle);
         } else {
-            moveTowardsTarget(dx, dy, distance);
-        }
-    }
+            float moveDist = MOVE_SPEED * GameView.frameTime;
+            float ratio = moveDist / distance;
 
-    private void moveTowardsTarget(float dx, float dy, float distance) {
-        float moveDist = MOVE_SPEED * GameView.frameTime;
-        float ratio = moveDist / distance;
-        if (ratio > 1) ratio = 1;
-        setPosition(x + dx * ratio, y + dy * ratio, RADIUS);
+            if (ratio > 1) ratio = 1;
+
+            setPosition(x + dx * ratio, y + dy * ratio, RADIUS);
+        }
     }
 
     @Override
@@ -105,17 +118,8 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
         return collisionRect;
     }
 
-    @Override
-    public void onRecycle() {
-    }
-
-    @Override
-    public MainScene.Layer getLayer() {
-        return MainScene.Layer.block;
-    }
-
     private float gridXToX(int gridX) {
-        return Metrics.width / HORZ * (gridX + 0.5f);
+        return Metrics.width / GRID_X * (gridX + 0.5f);
     }
 
     private float gridYToY(int gridY) {
@@ -127,7 +131,7 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     }
 
     // 블록 집고 움직이기 처리용---------------------------------------------
-    private float startX, startY;
+    private float startDragLogicX, startDragLogicY;
     private static final float DRAG_LIMIT = 40f; // 최대 이동 거리
 
     public float getX() {
@@ -146,24 +150,26 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     }
 
 
-    public void startDrag(float x, float y) {
-        startX = x;
-        startY = y;
-        setPosition(x, y, RADIUS * seletedScale);
+    public void startDrag(float logicX, float logicY) {
+        startDragLogicX = logicX;
+        startDragLogicY = logicY;
+        setPosition(logicX, logicY, RADIUS * seletedScale);
+        setState(State.Dragging);
     }
 
-    public void updateDrag(float x, float y) {
-        float dx = x - startX;
-        float dy = y - startY;
+    public void updateDrag(float logicX, float logicY) {
+        float dx = logicX - startDragLogicX;
+        float dy = logicY - startDragLogicY;
 
         // 이동 제한 적용
         dx = Math.max(-DRAG_LIMIT, Math.min(dx, DRAG_LIMIT));
         dy = Math.max(-DRAG_LIMIT, Math.min(dy, DRAG_LIMIT));
 
-        setPosition(startX + dx, startY + dy, RADIUS * seletedScale);
+        setPosition(startDragLogicX + dx, startDragLogicY + dy, RADIUS * seletedScale);
     }
     public void endDrag() {
         setPosition(gridXToX(gridX), gridYToY(gridY), RADIUS);
+        setState(State.Idle);
     }
 
     // ------------------------------------------------------------------
@@ -189,11 +195,11 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     private float targetX, targetY;
     private static final float MOVE_SPEED = 200f; // 초당 이동 픽셀 수
 
-    public float getStartX() {
-        return startX;
+    public float getStartDragLogicX() {
+        return startDragLogicX;
     }
-    public float getStartY() {
-        return startY;
+    public float getStartDragLogicY() {
+        return startDragLogicY;
     }
 
     public void setTargetPosition(float x, float y) {
@@ -206,17 +212,37 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     }
 
     public void swapWith(Block other) {
-        int tempGridX = this.gridX;
-        int tempGridY = this.gridY;
-
-        this.setGridPosition(other.gridX, other.gridY);
-        other.setGridPosition(tempGridX, tempGridY);
-
-        this.setTargetPositionToGrid();
-        other.setTargetPositionToGrid();
+        this.setTargetPosition(other.getX(), other.getY());
+        other.setTargetPosition(this.getX(), this.getY());
 
         this.setState(State.Swapping);
         other.setState(State.Swapping);
     }
+    // ------------------------------------------------------------------
+
+    // 블록 재활용 처리----------------------------------------------------
+
+    @Override
+    public void onRecycle() {
+        this.gridX = -1;
+        this.gridY = -1;
+        this.type = -1;
+        this.state = State.Idle;
+        this.x = 0;
+        this.y = 0;
+        super.setPosition(0, 0, RADIUS);
+        this.startDragLogicX = 0;
+        this.startDragLogicY = 0;
+        this.targetX = 0;
+        this.targetY = 0;
+        this.dx = 0;
+        this.dy = 0;
+    }
+
+    @Override
+    public MainScene.Layer getLayer() {
+        return MainScene.Layer.block;
+    }
+
     // ------------------------------------------------------------------
 }
