@@ -100,7 +100,7 @@
                 case FALLING_AND_GENERATING:
                     fallBlocks();
                     generateBlock();
-                    gameState = GameState.IDLE;
+                    gameState = GameState.MATCHING;
                     break;
                 default:
                     break;
@@ -381,7 +381,19 @@
             for (int x = 0; x < GRID_X; x++) {
                 for (int y = 0; y < GRID_Y; y++) {
                     if (grid[x][y] == null) {
+                        for (int k = y + 1; k < GRID_Y; k++) {
+                            if (grid[x][k] != null) {
+                                Block fallingBlock = grid[x][k];
 
+                                grid[x][y] = fallingBlock;
+                                grid[x][k] = null;
+
+                                fallingBlock.setGridPosition(x, y);
+                                fallingBlock.setTargetPositionToGrid();
+                                fallingBlock.setState(Block.State.Swapping);
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -390,7 +402,11 @@
         }
 
         private void generateBlock() {
+            for (int x = 0; x < GRID_X; x++) {
+                for(int y = 0; y < GRID_Y; y++) {
 
+                }
+            }
         }
 
         //-------------------------------------------------------------------------
