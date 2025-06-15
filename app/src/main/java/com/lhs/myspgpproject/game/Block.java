@@ -21,10 +21,18 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     public static final float RAD = RADIUS;
     public static final float seletedScale = 1.2f;
     private static final float GRID_X = 7;
+    public static final int TYPE_NORMAL_BLOCK_COUNT = 7;
+    public static final int TYPE_CLOCK_BOOSTER = 7;
+    public static final int TYPE_BOMB_BOOSTER = 8;
+    public static final int TYPE_LINE_BOOSTER = 9;
+
+    public static final int TYPE_SPECIAL_BLOCK_START = TYPE_CLOCK_BOOSTER;
+    public static final int TOTAL_BLOCK_TYPES = TYPE_LINE_BOOSTER + 1;
+
     private static final int[] resIds = {
             R.mipmap.block_01, R.mipmap.block_02, R.mipmap.block_03,
             R.mipmap.block_04, R.mipmap.block_05, R.mipmap.block_06,
-            R.mipmap.block_07
+            R.mipmap.block_07, R.mipmap.clock,
     };
     protected RectF collisionRect = new RectF();
     private int type;
@@ -49,7 +57,11 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
         Log.v(TAG, "Created Block@ " + System.identityHashCode(this));
     }
     private Block init(int type, int gridX, int gridY) {
-        this.setImageResourceId(resIds[type], 10);
+        if(type == TYPE_CLOCK_BOOSTER) {
+            this.setImageResourceId(resIds[type], 1);
+        } else {
+            this.setImageResourceId(resIds[type], 10);
+        }
         this.type = type;
         this.gridX = gridX;
         this.gridY = gridY;
@@ -245,6 +257,14 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     public MainScene.Layer getLayer() {
         return MainScene.Layer.block;
     }
+
+    // ------------------------------------------------------------------
+
+    // 특수 블록 처리----------------------------------------------------
+    public boolean isClockBooster() { return type == TYPE_CLOCK_BOOSTER; }
+    public boolean isBombBooster() { return type == TYPE_BOMB_BOOSTER; }
+    public boolean isLineBooster() { return type == TYPE_LINE_BOOSTER; }
+    public boolean isSpecialBlock() { return type >= TYPE_SPECIAL_BLOCK_START; }
 
     // ------------------------------------------------------------------
 }

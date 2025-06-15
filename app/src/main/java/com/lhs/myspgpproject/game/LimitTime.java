@@ -50,13 +50,21 @@ public class LimitTime implements IGameObject {
     public void draw(Canvas canvas) {
         int value = this.limitTime;
         float x = right;
-        while (value > 0) {
-            int digit = value % 10;
-            srcRect.set(digit * srcCharWidth, 0, (digit + 1) * srcCharWidth, srcCharHeight);
+
+        if (value == 0) {
+            srcRect.set(0 * srcCharWidth, 0, (0 + 1) * srcCharWidth, srcCharHeight);
             x -= dstCharWidth;
             dstRect.set(x, top, x + dstCharWidth, top + dstCharHeight);
             canvas.drawBitmap(bitmap, srcRect, dstRect, null);
-            value /= 10;
+        } else {
+            while (value > 0) {
+                int digit = value % 10;
+                srcRect.set(digit * srcCharWidth, 0, (digit + 1) * srcCharWidth, srcCharHeight);
+                x -= dstCharWidth;
+                dstRect.set(x, top, x + dstCharWidth, top + dstCharHeight);
+                canvas.drawBitmap(bitmap, srcRect, dstRect, null);
+                value /= 10;
+            }
         }
     }
 
@@ -73,5 +81,9 @@ public class LimitTime implements IGameObject {
 
     public void setCallback(TimeOverCallback callback) {
         this.callback = callback;
+    }
+
+    public void addTime(int seconds) {
+        this.limitTime += seconds;
     }
 }

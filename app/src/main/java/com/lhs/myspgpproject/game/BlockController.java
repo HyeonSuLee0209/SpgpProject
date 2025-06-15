@@ -22,9 +22,11 @@
         private static final int TYPE_NUMS = 7;
         private static MainScene scene;
         private Score gameScoreRef;
-
         private int comboCount = 0;
         private static final float COMBO_MULTIPLIER_INCREMENT = 0.5f;
+        private int totalDeletedBlocks = 0;
+        private static final int BLOCKS_FOR_BOOSTER = 20;
+        private boolean boosterCreationPending = false;
 
         private final List<Block> pendingDeletions = new ArrayList<>();
 
@@ -51,7 +53,7 @@
         public int checkStartBoard(int vert, int horz) {
             int type;
             do {
-                type = random.nextInt(TYPE_NUMS);
+                type = random.nextInt(Block.TYPE_NORMAL_BLOCK_COUNT);
             } while (isSameAsPrevious(vert, horz, type));
 
             return type;
