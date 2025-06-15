@@ -9,6 +9,7 @@
     import java.util.Random;
 
     import kr.ac.tukorea.ge.spgp2025.a2dg.framework.interfaces.IGameObject;
+    import kr.ac.tukorea.ge.spgp2025.a2dg.framework.objects.Score;
     import kr.ac.tukorea.ge.spgp2025.a2dg.framework.view.Metrics;
 
     public class BlockController implements IGameObject {
@@ -20,12 +21,17 @@
         private Block[][] grid = new Block[GRID_X][GRID_Y];
         private static final int TYPE_NUMS = 7;
         private static MainScene scene;
+        private Score gameScoreRef;
+
+        private int comboCount = 0;
+        private static final float COMBO_MULTIPLIER_INCREMENT = 0.5f;
 
         private final List<Block> pendingDeletions = new ArrayList<>();
 
         public BlockController(MainScene mainScene) {
             this.scene = mainScene;
             instance = this;
+            this.gameScoreRef = mainScene.getScore();
         }
 
         public void generateBoard() {
@@ -75,6 +81,7 @@
             MATCHING,
             DELETING,
             FALLING_AND_GENERATING,
+            REGENERATING,
         }
         private GameState gameState = GameState.IDLE;
 
@@ -92,6 +99,14 @@
             switch (gameState) {
                 case IDLE:
                     handleIdle();
+                    if(comboCount > 0) {
+                        comboCount = 0;
+                    }
+                    if (selectedBlock == null && targetBlock == null) {
+                        if (!hasMovePossible()) {
+                            gameState = GameState.REGENERATING;
+                        }
+                    }
                     break;
                 case SWAPPING:
                     handleSwapping();
@@ -110,6 +125,9 @@
                     if(allBlocksIdle()) {
                         gameState = GameState.MATCHING;
                     }
+                    break;
+                case REGENERATING:
+                    regenerateBoard();
                     break;
                 default:
                     break;
@@ -144,6 +162,7 @@
                 }
                 gameState = GameState.IDLE;
             } else {
+                comboCount++;
                 gameState = GameState.DELETING;
             }
 
@@ -406,7 +425,18 @@
         }
 
         private void collectBlocksForDeletion(List<List<Block>> matchedGroups) {
+            int scoreToAdd = 0;
+
             for (List<Block> matchGroup : matchedGroups) {
+                int groupSize = matchGroup.size();
+                scoreToAdd += 100;
+
+                if (groupSize >= 5) {
+                    scoreToAdd += 200;
+                } else if (groupSize >= 4) {
+                    scoreToAdd += 100;
+                }
+
                 for(Block b : matchGroup) {
                     if (b != null && !pendingDeletions.contains(b)) {
                         pendingDeletions.add(b);
@@ -415,6 +445,18 @@
                         grid[b.getGridX()][b.getGridY()] = null;
                     }
                 }
+            }
+
+            float comboMultiplier = 1.0f;
+
+            if (comboCount > 1) {
+                comboMultiplier += (comboCount - 1) * COMBO_MULTIPLIER_INCREMENT;
+            }
+
+            int finalScoreToAdd = (int) (scoreToAdd * comboMultiplier);
+
+            if (finalScoreToAdd > 0) {
+                gameScoreRef.add(finalScoreToAdd);
             }
         }
 
@@ -513,4 +555,58 @@
         }
 
         //-------------------------------------------------------------------------
+
+        private boolean hasMovePossible() {
+            for (int x = 0; x < GRID_X; x++) {
+                for (int y = 0; y < GRID_Y; y++) {
+                    Block currentBlock = grid[x][y];
+                    if (currentBlock == null) continue;
+
+                    int[] dx = {0, 0, 1, -1};
+                    int[] dy = {1, -1, 0, 0};
+
+                    for (int i = 0; i < 4; i++) {
+                        int neighborX = x + dx[i];
+                        int neighborY = y + dy[i];
+
+                        if (neighborX < 0 || neighborX >= GRID_X || neighborY < 0 || neighborY >= GRID_Y) {
+                            continue;
+                        }
+
+                        Block neighborBlock = grid[neighborX][neighborY];
+                        if (neighborBlock == null) continue;
+
+                        grid[x][y] = neighborBlock;
+                        grid[neighborX][neighborY] = currentBlock;
+
+                        List<List<Block>> foundMatches = findMatches();
+
+                        grid[x][y] = currentBlock;
+                        grid[neighborX][neighborY] = neighborBlock;
+
+                        if (!foundMatches.isEmpty()) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        private void regenerateBoard() {
+            for (int x = 0; x < GRID_X; x++) {
+                for (int y = 0; y < GRID_Y; y++) {
+                    Block block = grid[x][y];
+                    if (block != null) {
+                        scene.remove(MainScene.Layer.block, block);
+                        block.onRecycle();
+                        grid[x][y] = null;
+                    }
+                }
+            }
+
+            generateBoard();
+
+            gameState = GameState.MATCHING;
+        }
     }

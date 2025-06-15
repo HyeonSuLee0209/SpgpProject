@@ -37,7 +37,7 @@ public class MainScene extends Scene {
         initLayers(Layer.COUNT);
 
         this.score = new Score(R.mipmap.number_24x32, 885f, 135f, 60f);
-        score.setScore(10);
+        score.setScore(0);
         add(Layer.ui, score);
 
         this.limitTime = new LimitTime(R.mipmap.number_24x32, 185f, 150f, 60f);
@@ -89,5 +89,9 @@ public class MainScene extends Scene {
     @Override
     protected int getTouchLayerIndex() {
         return Layer.touch.ordinal();
+    }
+
+    public Score getScore() {
+        return this.score;
     }
 }

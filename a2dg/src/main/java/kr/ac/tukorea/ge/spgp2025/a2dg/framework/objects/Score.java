@@ -49,15 +49,28 @@ public class Score implements IGameObject {
 
     @Override
     public void draw(Canvas canvas) {
-        int value = this.displayScore;
+        int tempValue = this.displayScore;
         float x = right;
-        while (value > 0) {
-            int digit = value % 10;
+
+        int digitsDrawn = 0;
+
+        for (int i = 0; i < 7; i++) {
+            int digit;
+            if (tempValue == 0 && i > 0) {
+                digit = 0;
+            } else {
+                digit = tempValue % 10;
+                tempValue /= 10;
+            }
+
             srcRect.set(digit * srcCharWidth, 0, (digit + 1) * srcCharWidth, srcCharHeight);
-            x -= dstCharWidth;
-            dstRect.set(x, top, x + dstCharWidth, top + dstCharHeight);
+
+            float drawX = x - dstCharWidth;
+
+            dstRect.set(drawX, top, x, top + dstCharHeight);
             canvas.drawBitmap(bitmap, srcRect, dstRect, null);
-            value /= 10;
+
+            x = drawX;
         }
     }
 
