@@ -14,8 +14,8 @@
     public class BlockController implements IGameObject {
         private static final String TAG = BlockController.class.getSimpleName();
         private final Random random = new Random();
-        private static final int GRID_X = 7;
-        private static final int GRID_Y = 7;
+        public static final int GRID_X = 7;
+        public static final int GRID_Y = 7;
         private static boolean isBoard = true;
         private Block[][] grid = new Block[GRID_X][GRID_Y];
         private static final int TYPE_NUMS = 7;
@@ -444,20 +444,31 @@
                     }
                 }
 
-                for (int y = 0; y < GRID_Y; y++) {
-                    if (grid[x][y] == null) {
-                        for (int k = y + 1; k < GRID_Y; k++) {
-                            if (grid[x][k] != null) {
-                                Block fallingBlock = grid[x][k];
+                if(emptyCount > 0) {
+                    int currentFillY = -1;
 
-                                grid[x][y] = fallingBlock;
-                                grid[x][k] = null;
+                    for(int y = 0; y < GRID_Y; y++) {
+                        if (grid[x][y] == null) {
+                            currentFillY = y;
+                            break;
+                        }
+                    }
 
-                                fallingBlock.setGridPosition(x, y);
-                                fallingBlock.setTargetPositionToGrid();
-                                fallingBlock.setState(Block.State.Swapping);
-                                break;
-                            }
+                    if (currentFillY == -1) continue;
+
+                    for (int y = currentFillY + 1; y < GRID_Y; y++) {
+                        if (grid[x][y] != null) {
+                            Block fallingBlock = grid[x][y];
+
+                            grid[x][currentFillY] = fallingBlock;
+                            grid[x][y] = null;
+
+                            fallingBlock.setGridPosition(x, currentFillY);
+
+                            fallingBlock.setTargetPositionToGrid();
+                            fallingBlock.setState(Block.State.Swapping);
+
+                            currentFillY++;
                         }
                     }
                 }
@@ -466,34 +477,35 @@
 
         private void generateBlock() {
             for (int x = 0; x < GRID_X; x++) {
-                int emptyCount = 0;
-
+                int emptyCountInColumn = 0;
                 for(int y = 0; y < GRID_Y; y++) {
                     if (grid[x][y] == null) {
-                        emptyCount++;
+                        emptyCountInColumn++;
                     }
                 }
 
-                if (emptyCount > 0) {
-                    int currentSpawnIndex = 0;
+                if (emptyCountInColumn > 0) {
+                    int currentSpawnCount = 0;
 
                     for (int y = 0; y < GRID_Y; y++) {
                         if (grid[x][y] == null) {
                             int type = random.nextInt(TYPE_NUMS);
-
-                            float spawnYInGrid = GRID_Y + (emptyCount - 1) - currentSpawnIndex;
-                            Block newBlock = Block.get(type, x, (int)spawnYInGrid);
+                            Block newBlock = Block.get(type, x, y);
 
                             grid[x][y] = newBlock;
                             scene.add(newBlock.getLayer(), newBlock);
 
-                            newBlock.setTargetPosition(
+                            newBlock.setTargetPositionToGrid();
+
+                            float initialYPixel = Metrics.height - ( (float)GRID_Y + currentSpawnCount + 0.5f) * Block.RAD * 2;
+                            newBlock.setPosition(
                                     Metrics.width / GRID_X * (x + 0.5f),
-                                    Metrics.height - (y + 0.5f) * Block.RAD * 2
+                                    initialYPixel,
+                                    Block.RAD
                             );
 
                             newBlock.setState(Block.State.Swapping);
-                            currentSpawnIndex++;
+                            currentSpawnCount++;
                         }
                     }
                 }

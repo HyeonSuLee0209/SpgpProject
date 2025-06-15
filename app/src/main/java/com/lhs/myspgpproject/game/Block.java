@@ -107,7 +107,9 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
 
     @Override
     public void draw(Canvas canvas) {
-        super.draw(canvas);
+        if (y + RADIUS >= (Metrics.height - (BlockController.GRID_Y * RADIUS * 2))) {
+            super.draw(canvas);
+        }
     }
 
     private void updateCollisionRect() {
