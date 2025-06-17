@@ -261,10 +261,10 @@ public class Block extends AnimSprite implements IRecyclable, IBoxCollidable, IL
     // ------------------------------------------------------------------
 
     // 특수 블록 처리----------------------------------------------------
-    public boolean isClockBooster() { return type == TYPE_CLOCK_BOOSTER; }
-    public boolean isBombBooster() { return type == TYPE_BOMB_BOOSTER; }
-    public boolean isLineBooster() { return type == TYPE_LINE_BOOSTER; }
-    public boolean isSpecialBlock() { return type >= TYPE_SPECIAL_BLOCK_START; }
+    public boolean isClockBooster() { return this.type == TYPE_CLOCK_BOOSTER; }
+    public boolean isBombBooster() { return this.type == TYPE_BOMB_BOOSTER; }
+    public boolean isLineBooster() { return this.type == TYPE_LINE_BOOSTER; }
+    public boolean isSpecialBlock() { return this.type >= TYPE_SPECIAL_BLOCK_START; }
 
     // ------------------------------------------------------------------
 }

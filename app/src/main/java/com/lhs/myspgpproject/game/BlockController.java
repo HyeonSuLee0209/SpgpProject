@@ -19,14 +19,14 @@
         public static final int GRID_Y = 7;
         private static boolean isBoard = true;
         private Block[][] grid = new Block[GRID_X][GRID_Y];
-        private static final int TYPE_NUMS = 7;
+        private boolean boosterCreationPending = false;
+        private int nextBoosterType = -1;
         private static MainScene scene;
         private Score gameScoreRef;
         private int comboCount = 0;
         private static final float COMBO_MULTIPLIER_INCREMENT = 0.5f;
         private int totalDeletedBlocks = 0;
-        private static final int BLOCKS_FOR_BOOSTER = 20;
-        private boolean boosterCreationPending = false;
+        private static final int BLOCKS_FOR_CLOCK = 10;
 
         private final List<Block> pendingDeletions = new ArrayList<>();
 
@@ -339,70 +339,212 @@
 
         // 매칭 판별 처리 -----------------------------------------------------------
         private final List<List<Block>> matchedGroups = new ArrayList<>();
+        private boolean[][] matchedFlags = new boolean[GRID_X][GRID_Y];
 
         private List<List<Block>> findMatches() {
             matchedGroups.clear();
-            boolean[][] visited = new boolean[GRID_X][GRID_Y];
 
-            // 가로, 세로 모두 탐색
-            findMatchesInDirection(true);  // 가로
-            findMatchesInDirection(false); // 세로
+            for (int x = 0; x < GRID_X; x++) {
+                for (int y = 0; y < GRID_Y; y++) {
+                    matchedFlags[x][y] = false;
+                }
+            }
+            
+            // 가로
+            for (int y = 0; y < GRID_Y; y++) {
+                List<Block> buffer = new ArrayList<>();
+                int currentMatchBaseType = -1;
+
+                for (int x = 0; x < GRID_X; x++) {
+                    Block block = grid[x][y];
+
+                    if (block == null) {
+                        if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                            markBlocksAsMatched(buffer);
+                        }
+                        buffer.clear();
+                        currentMatchBaseType = -1;
+                        continue;
+                    }
+
+                    if (!block.isClockBooster()) {
+                        if (currentMatchBaseType == -1) {
+                            currentMatchBaseType = block.getType();
+                        } else if (block.getType() != currentMatchBaseType) {
+                            if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                                markBlocksAsMatched(buffer);
+                            }
+                            buffer.clear();
+                            currentMatchBaseType = block.getType();
+                            buffer.add(block);
+                            continue;
+                        }
+                    }
+
+                    if (buffer.isEmpty()) {
+                        buffer.add(block);
+                    } else {
+                        if (canBlocksMatch(buffer.get(buffer.size() - 1), block)) {
+                            buffer.add(block);
+                        } else {
+                            if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                                markBlocksAsMatched(buffer);
+                            }
+                            buffer.clear();
+                            buffer.add(block);
+                        }
+                    }
+                }
+                if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                    markBlocksAsMatched(buffer);
+                }
+            }
+            
+            // 세로
+            for (int x = 0; x < GRID_X; x++) {
+                List<Block> buffer = new ArrayList<>();
+                int currentMatchBaseType = -1;
+
+                for (int y = 0; y < GRID_Y; y++) {
+                    Block block = grid[x][y];
+
+                    if (block == null) {
+                        if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                            markBlocksAsMatched(buffer);
+                        }
+                        buffer.clear();
+                        currentMatchBaseType = -1;
+                        continue;
+                    }
+
+                    if (!block.isClockBooster()) {
+                        if (currentMatchBaseType == -1) {
+                            currentMatchBaseType = block.getType();
+                        } else if (block.getType() != currentMatchBaseType) {
+                            if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                                markBlocksAsMatched(buffer);
+                            }
+                            buffer.clear();
+                            currentMatchBaseType = block.getType();
+                            buffer.add(block);
+                            continue;
+                        }
+                    }
+
+                    if (buffer.isEmpty()) {
+                        buffer.add(block);
+                    } else {
+                        if (canBlocksMatch(buffer.get(buffer.size() - 1), block)) {
+                            buffer.add(block);
+                        } else {
+                            if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                                markBlocksAsMatched(buffer);
+                            }
+                            buffer.clear();
+                            buffer.add(block);
+                        }
+                    }
+                }
+                if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                    markBlocksAsMatched(buffer);
+                }
+            }
+
+            // 최종
+            for (int x = 0; x < GRID_X; x++) {
+                for (int y = 0; y < GRID_Y; y++) {
+                    if (matchedFlags[x][y] && grid[x][y] != null && !isBlockAlreadyInAnyGroup(grid[x][y])) {
+                        List<Block> currentMatchGroup = new ArrayList<>();
+                        collectConnectedMatchedBlocks(x, y, currentMatchGroup);
+                        if (currentMatchGroup.size() >= 3) {
+                            matchedGroups.add(currentMatchGroup);
+                        }
+                    }
+                }
+            }
 
             categorizeMatches(matchedGroups);
             return matchedGroups;
         }
 
-        private void findMatchesInDirection(boolean horizontal) {
-            int outerLimit = horizontal ? GRID_X : GRID_Y;
-            int innerLimit = horizontal ? GRID_Y : GRID_X;
-            boolean[][] visited = new boolean[GRID_X][GRID_Y];
-
-            for (int outer = 0; outer < outerLimit; outer++) {
-                int count = 0;
-                int lastType = -1;
-                List<Block> buffer = new ArrayList<>();
-
-                for (int inner = 0; inner < innerLimit; inner++) {
-                    int x = horizontal ? outer : inner;
-                    int y = horizontal ? inner : outer;
-
-                    Block block = grid[x][y];
-                    int type = (block != null) ? block.getType() : -1;
-
-                    if (type == lastType && block != null) {
-                        buffer.add(block);
-                        count++;
-                    } else {
-                        if (count >= 3) {
-                            addIfNotVisited(buffer, visited);
-                        }
-                        buffer.clear();
-                        if (block != null) buffer.add(block);
-                        count = 1;
-                        lastType = type;
-                    }
-                }
-
-                // 마지막에도 체크
-                if (count >= 3) {
-                    addIfNotVisited(buffer, visited);
+        private void markBlocksAsMatched(List<Block> blocks) {
+            for (Block b : blocks) {
+                if (b != null) {
+                    matchedFlags[b.getGridX()][b.getGridY()] = true;
                 }
             }
         }
 
-        private void addIfNotVisited(List<Block> blocks, boolean[][] visited) {
-            List<Block> group = new ArrayList<>();
-            for (Block b : blocks) {
-                int x = b.getGridX();
-                int y = b.getGridY();
-                if (!visited[x][y]) {
-                    group.add(b);
-                    visited[x][y] = true;
+        private void collectConnectedMatchedBlocks(int startX, int startY, List<Block> group) {
+            if (startX < 0 || startX >= GRID_X || startY < 0 || startY >= GRID_Y) return;
+            if (!matchedFlags[startX][startY] || grid[startX][startY] == null) return;
+
+            Block currentBlock = grid[startX][startY];
+
+            if (group.contains(currentBlock)) return;
+
+            group.add(currentBlock);
+
+            int[] dx = {0, 0, 1, -1};
+            int[] dy = {1, -1, 0, 0};
+
+            for (int i = 0; i < 4; i++) {
+                int nextX = startX + dx[i];
+                int nextY = startY + dy[i];
+
+                if (nextX >= 0 && nextX < GRID_X && nextY >= 0 && nextY < GRID_Y) {
+                    Block nextBlock = grid[nextX][nextY];
+
+                    if (nextBlock != null && !group.contains(nextBlock) && matchedFlags[nextX][nextY] &&
+                            canBlocksMatch(currentBlock, nextBlock)) {
+                        collectConnectedMatchedBlocks(nextX, nextY, group);
+                    }
                 }
             }
-            if (group.size() >= 3) {
-                matchedGroups.add(group);
+        }
+
+        private boolean isBlockAlreadyInAnyGroup(Block block) {
+            for (List<Block> group : matchedGroups) {
+                if (group.contains(block)) {
+                    return true;
+                }
             }
+            return false;
+        }
+
+        private boolean canBlocksMatch(Block b1, Block b2) {
+            if (b1 == null || b2 == null) return false;
+
+            if (b1.isClockBooster() || b2.isClockBooster()) {
+                return true;
+            }
+
+            return b1.getType() == b2.getType();
+        }
+
+        private boolean isMatchingGroup(List<Block> group) {
+            if (group.size() < 3) return false;
+
+            List<Integer> nonSpecialBlockTypes = new ArrayList<>();
+            for (Block b : group) {
+                if (b == null) return false;
+
+                if (!b.isClockBooster()) {
+                    nonSpecialBlockTypes.add(b.getType());
+                }
+            }
+
+            if (nonSpecialBlockTypes.isEmpty()) {
+                return false;
+            }
+
+            int firstType = nonSpecialBlockTypes.get(0);
+            for (int i = 1; i < nonSpecialBlockTypes.size(); i++) {
+                if (nonSpecialBlockTypes.get(i) != firstType) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private boolean isTShape(List<Block> blocks) {
@@ -414,40 +556,51 @@
 
         private void categorizeMatches(List<List<Block>> matchedGroups) {
             for (List<Block> matchGroup : matchedGroups) {
-                if (matchGroup.size() == 3) {
-                    Log.d(TAG, "3개 매칭");
-                } else if (matchGroup.size() == 4) {
-                    Log.d(TAG, "4개 매칭");
-                } else if (isTShape(matchGroup)) {
-                    Log.d(TAG, "T형 매칭");
-                } else if (matchGroup.size() == 5) {
-                    Log.d(TAG, "5개 매칭");
-                }
+                Log.d(TAG, matchGroup.size() + "개 매칭");
             }
         }
 
         private void collectBlocksForDeletion(List<List<Block>> matchedGroups) {
             int scoreToAdd = 0;
+            int currentDeletedCount = 0;
+            List<Block> blocksToActivateEffect = new ArrayList<>();
 
             for (List<Block> matchGroup : matchedGroups) {
                 int groupSize = matchGroup.size();
+
                 scoreToAdd += 100;
 
                 if (groupSize >= 5) {
                     scoreToAdd += 200;
-                } else if (groupSize >= 4) {
+                } else if (groupSize == 4) {
                     scoreToAdd += 100;
                 }
 
                 for(Block b : matchGroup) {
                     if (b != null && !pendingDeletions.contains(b)) {
                         pendingDeletions.add(b);
+                        totalDeletedBlocks++;
+                        currentDeletedCount++;
+
+                        if (b.isSpecialBlock()) {
+                            blocksToActivateEffect.add(b);
+                        }
                     }
+
                     if (b != null) {
                         grid[b.getGridX()][b.getGridY()] = null;
                     }
                 }
             }
+
+            activateSpecialBlockEffects(blocksToActivateEffect);
+
+            if (currentDeletedCount > 0 && (totalDeletedBlocks >= BLOCKS_FOR_CLOCK) && !boosterCreationPending) {
+                nextBoosterType = Block.TYPE_CLOCK_BOOSTER;
+                boosterCreationPending = true;
+                totalDeletedBlocks -= BLOCKS_FOR_CLOCK;
+            }
+
 
             float comboMultiplier = 1.0f;
 
@@ -462,18 +615,28 @@
             }
         }
 
+        private void activateSpecialBlockEffects(List<Block> specialBlocks) {
+            for (Block b : specialBlocks) {
+                if (b.isClockBooster()) {
+                    scene.getLimitTime().addTime(5); // 5초 증가
+                }
+            }
+        }
+
         private void processPendingDeletions() {
             if (pendingDeletions.isEmpty()) {
                 return;
             }
-            // Log.d(TAG, "Processing " + pendingDeletions.size() + " pending deletions.");
+
             for (Block b : pendingDeletions) {
                 if (b != null) {
                     scene.remove(MainScene.Layer.block, b);
+                    b.onRecycle();
                 }
             }
             pendingDeletions.clear();
         }
+
         //-------------------------------------------------------------------------
 
         // 블록 하강 처리 -----------------------------------------------------------
@@ -521,19 +684,29 @@
 
         private void generateBlock() {
             for (int x = 0; x < GRID_X; x++) {
-                int emptyCountInColumn = 0;
+                int emptyCountInY = 0;
+
                 for(int y = 0; y < GRID_Y; y++) {
                     if (grid[x][y] == null) {
-                        emptyCountInColumn++;
+                        emptyCountInY++;
                     }
                 }
 
-                if (emptyCountInColumn > 0) {
+                if (emptyCountInY > 0) {
                     int currentSpawnCount = 0;
 
                     for (int y = 0; y < GRID_Y; y++) {
                         if (grid[x][y] == null) {
-                            int type = random.nextInt(TYPE_NUMS);
+                            int type;
+
+                            if (boosterCreationPending && nextBoosterType != -1) {
+                                type = nextBoosterType;
+                                boosterCreationPending = false;
+                                nextBoosterType = -1;
+                            } else {
+                                type = random.nextInt(Block.TYPE_NORMAL_BLOCK_COUNT);
+                            }
+
                             Block newBlock = Block.get(type, x, y);
 
                             grid[x][y] = newBlock;
@@ -581,7 +754,7 @@
                         grid[x][y] = neighborBlock;
                         grid[neighborX][neighborY] = currentBlock;
 
-                        List<List<Block>> foundMatches = findMatches();
+                        List<List<Block>> foundMatches = findMatchesInSimulation(grid); // <--- 이 부분이 수정된 부분입니다.
 
                         grid[x][y] = currentBlock;
                         grid[neighborX][neighborY] = neighborBlock;
@@ -593,6 +766,82 @@
                 }
             }
             return false;
+        }
+
+        private List<List<Block>> findMatchesInSimulation(Block[][] currentGrid) {
+            List<List<Block>> simulatedMatches = new ArrayList<>();
+            boolean[][] simulatedMatchedFlags = new boolean[GRID_X][GRID_Y];
+
+            for (int y = 0; y < GRID_Y; y++) {
+                List<Block> buffer = new ArrayList<>();
+                for (int x = 0; x < GRID_X; x++) {
+                    Block block = currentGrid[x][y];
+                    if (block == null || simulatedMatchedFlags[x][y]) {
+                        if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                            simulatedMatches.add(new ArrayList<>(buffer));
+                            for (Block b : buffer) simulatedMatchedFlags[b.getGridX()][b.getGridY()] = true;
+                        }
+                        buffer.clear();
+                        continue;
+                    }
+
+                    if (buffer.isEmpty()) {
+                        buffer.add(block);
+                    } else {
+                        Block firstBlockInGroup = buffer.get(0);
+                        if (canBlocksMatch(firstBlockInGroup, block)) {
+                            buffer.add(block);
+                        } else {
+                            if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                                simulatedMatches.add(new ArrayList<>(buffer));
+                                for (Block b : buffer) simulatedMatchedFlags[b.getGridX()][b.getGridY()] = true;
+                            }
+                            buffer.clear();
+                            buffer.add(block);
+                        }
+                    }
+                }
+                if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                    simulatedMatches.add(new ArrayList<>(buffer));
+                    for (Block b : buffer) simulatedMatchedFlags[b.getGridX()][b.getGridY()] = true;
+                }
+            }
+
+            for (int x = 0; x < GRID_X; x++) {
+                List<Block> buffer = new ArrayList<>();
+                for (int y = 0; y < GRID_Y; y++) {
+                    Block block = currentGrid[x][y];
+                    if (block == null || simulatedMatchedFlags[x][y]) {
+                        if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                            simulatedMatches.add(new ArrayList<>(buffer));
+                            for (Block b : buffer) simulatedMatchedFlags[b.getGridX()][b.getGridY()] = true;
+                        }
+                        buffer.clear();
+                        continue;
+                    }
+
+                    if (buffer.isEmpty()) {
+                        buffer.add(block);
+                    } else {
+                        Block firstBlockInGroup = buffer.get(0);
+                        if (canBlocksMatch(firstBlockInGroup, block)) {
+                            buffer.add(block);
+                        } else {
+                            if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                                simulatedMatches.add(new ArrayList<>(buffer));
+                                for (Block b : buffer) simulatedMatchedFlags[b.getGridX()][b.getGridY()] = true;
+                            }
+                            buffer.clear();
+                            buffer.add(block);
+                        }
+                    }
+                }
+                if (buffer.size() >= 3 && isMatchingGroup(buffer)) {
+                    simulatedMatches.add(new ArrayList<>(buffer));
+                    for (Block b : buffer) simulatedMatchedFlags[b.getGridX()][b.getGridY()] = true;
+                }
+            }
+            return simulatedMatches;
         }
 
         private void regenerateBoard() {
